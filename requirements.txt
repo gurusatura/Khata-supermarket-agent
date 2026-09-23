@@ -1,0 +1,8 @@
+# Nebula Supermarket Ops Agent — Python Dependencies
+# Install with: pip install -r requirements.txt
+
+# PostgreSQL client (synchronous) — for scripts and DB connection layer
+psycopg[binary]==3.3.6
+
+# Loads .env file into environment variables
+python-dotenv==1.0.1
