@@ -26,14 +26,23 @@ def _find_product_id(product_name: str) -> str:
     """Helper: resolve a product name to its UUID from the DB."""
     with get_connection() as conn:
         with conn.cursor() as cur:
-            cur.execute(
-                "SELECT id FROM products WHERE name ILIKE %s LIMIT 1;",
-                (f"%{product_name}%",)
-            )
-            row = cur.fetchone()
-            if not row:
+            # 1. Exact match first
+            cur.execute("SELECT id FROM products WHERE name ILIKE %s;", (product_name,))
+            rows = cur.fetchall()
+            if len(rows) == 1:
+                return str(rows[0][0])
+            
+            # 2. Fuzzy match
+            cur.execute("SELECT id, name FROM products WHERE name ILIKE %s;", (f"%{product_name}%",))
+            rows = cur.fetchall()
+            
+            if len(rows) == 0:
                 raise ValueError(f"Product not found: '{product_name}'")
-            return str(row[0])
+            elif len(rows) > 1:
+                names = [r[1] for r in rows]
+                raise ValueError(f"Ambiguous product name '{product_name}'. Did you mean: {', '.join(names)}?")
+                
+            return str(rows[0][0])
 
 
 def _find_customer_id(customer_name: str) -> str | None:
@@ -42,12 +51,23 @@ def _find_customer_id(customer_name: str) -> str | None:
         return None
     with get_connection() as conn:
         with conn.cursor() as cur:
-            cur.execute(
-                "SELECT id FROM customers WHERE name ILIKE %s LIMIT 1;",
-                (f"%{customer_name}%",)
-            )
-            row = cur.fetchone()
-            return str(row[0]) if row else None
+            # 1. Exact match first
+            cur.execute("SELECT id FROM customers WHERE name ILIKE %s;", (customer_name,))
+            rows = cur.fetchall()
+            if len(rows) == 1:
+                return str(rows[0][0])
+                
+            # 2. Fuzzy match
+            cur.execute("SELECT id, name FROM customers WHERE name ILIKE %s;", (f"%{customer_name}%",))
+            rows = cur.fetchall()
+            
+            if len(rows) == 0:
+                return None
+            elif len(rows) > 1:
+                names = [r[1] for r in rows]
+                raise ValueError(f"Ambiguous customer name '{customer_name}'. Multiple customers matched: {', '.join(names)}. Please ask the user to clarify.")
+                
+            return str(rows[0][0])
 
 
 def _remove_item_from_sale(sale_id: str, product_name: str) -> dict:

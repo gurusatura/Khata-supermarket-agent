@@ -131,15 +131,51 @@ def invoice(sale_id: str):
 # ─────────────────────────────────────────────────────────────
 # TELEGRAM WEBHOOK (placeholder — wired in Stage 14)
 # ─────────────────────────────────────────────────────────────
+import urllib.request
+import urllib.parse
+import json
+from agent.harness import run_agent
+
+CHAT_HISTORIES = {}
+
 @app.post("/webhook", tags=["Telegram"])
 async def telegram_webhook(payload: dict):
     """
     Telegram webhook endpoint.
-    Stage 14 will wire this to the Agent.
-    For now, it acknowledges receipt and logs the update.
+    Wires incoming messages to the Agent and sends the reply back.
     """
-    print(f"[webhook] Received update: {payload.get('update_id', 'unknown')}")
-    return {"status": "received"}
+    if "message" in payload and "text" in payload["message"]:
+        chat_id = str(payload["message"]["chat"]["id"])
+        text = payload["message"]["text"]
+        print(f"[Telegram] Received from {chat_id}: {text}")
+        
+        # Get history
+        if chat_id not in CHAT_HISTORIES:
+            CHAT_HISTORIES[chat_id] = []
+        
+        history = CHAT_HISTORIES[chat_id]
+        
+        # Run agent
+        reply_text, new_history = run_agent(text, chat_id, history)
+        CHAT_HISTORIES[chat_id] = new_history
+        
+        # Send reply back to Telegram
+        token = os.getenv("TELEGRAM_BOT_TOKEN")
+        if token:
+            url = f"https://api.telegram.org/bot{token}/sendMessage"
+            data = json.dumps({
+                "chat_id": chat_id,
+                "text": reply_text
+            }).encode("utf-8")
+            
+            req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
+            try:
+                urllib.request.urlopen(req)
+                print(f"[Telegram] Sent reply to {chat_id}")
+            except Exception as e:
+                print(f"[Telegram Error] Failed to send message: {e}")
+                
+    return {"status": "ok"}
 
 
 # ─────────────────────────────────────────────────────────────

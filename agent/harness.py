@@ -51,17 +51,21 @@ Only ask if something is genuinely missing and cannot be inferred.
 ## Rules
 - NEVER make up a sale_id. Only use the one returned by `tool_draft_sale`.
 - NEVER make up stock quantities or totals. Always call the tools.
+- NEVER invent customer balances or payment records. ANY mention of a payment, balance check, or money changing hands MUST go through a tool call (`tool_check_khata` or `tool_record_khata_payment`). Do not perform mental math.
 - NEVER ask for information the user already gave you in their message.
 
-## One-shot example
+## One-shot examples
 User: "Start a bill for Ramesh"
-→ You call: tool_draft_sale(customer_name="Ramesh")   ← immediately, no text reply
+→ You call: tool_draft_sale(customer_name="Ramesh", payment_mode="CASH")   ← immediately, no text reply
 
 User: "Add 2kg Toor Dal"
 → You call: tool_add_item(sale_id=<id from above>, product_name="Toor Dal", quantity=2)   ← immediately
 
 User: "Done, finalize it"
 → You call: tool_finalize_sale(sale_id=<same id>)   ← immediately
+
+User: "Ramesh paid 50 rupees"
+→ You call: tool_record_khata_payment(customer_name="Ramesh", amount=50) ← immediately, no mental math
 """
 
 
@@ -142,9 +146,9 @@ def run_agent(user_message: str, chat_id: str, history: list) -> tuple[str, list
         reply = msg.content or "(no response)"
         
         # Safety check: Catch hallucinated plain-text tool calls
-        if "{" in reply and "tool_" in reply and '"name"' in reply:
+        if "tool_" in reply and ("{" in reply or "(" in reply):
             messages.append({"role": "assistant", "content": reply})
-            messages.append({"role": "user", "content": "ERROR: You returned raw JSON text. You MUST use the native tool calling feature to execute tools, not plain text."})
+            messages.append({"role": "user", "content": "ERROR: You returned raw text that looks like a tool call. You MUST use the native tool calling feature to execute tools, not plain text."})
             continue
 
         # Append assistant reply and user message to history for next turn
