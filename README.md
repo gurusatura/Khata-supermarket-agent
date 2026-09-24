@@ -58,8 +58,10 @@ python telegram_bot.py
 uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
-## ⚠️ Known Minor Issues
+## ⚠️ Known Minor Issues & Roadmap
 - **Live PDF Transmission via Telegram:** The `generate_invoice` tool successfully creates and saves PDF invoices locally (verified standalone). However, when triggered through the multi-turn Telegram flow, the LLM outputs the local file path instead of uploading the binary document over the Telegram API. The core PDF logic is fully functional (the PDF exists on disk), but the final transmission step via Telegram UI is a known quirk.
+- **Catalog Management & Reorder Alerts (`add_product`, `low_stock_query`):** Dynamic in-chat addition of brand new product catalog items (`add_product`) and dedicated reorder threshold queries (`low_stock_query`) are not yet wired to LLM tools. The PostgreSQL database schema already fully models and supports them (including `reorder_level` in `products`), but the tool interfaces are slated for the subsequent release.
+
 
 ## 🧪 Scenarios Tested
 - [x] Multi-item addition and cart editing.

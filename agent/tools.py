@@ -65,7 +65,7 @@ TOOL_DEFINITIONS = [
                         "description": "Selling price per unit to the customer (in INR).",
                     },
                 },
-                "required": ["product_name", "quantity", "cost_price", "sell_price"],
+                "required": ["product_name", "quantity"],
             },
         },
     },
@@ -256,4 +256,51 @@ TOOL_DEFINITIONS = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "tool_generate_analytics_deck",
+            "description": (
+                "Generate a 5-slide business analysis PowerPoint deck (PPTX) with real charts analyzing sales, "
+                "top products, payment breakdown, and GST collected. Returns the generated PPTX file path. "
+                "Use when user asks 'make sales analysis deck' or 'give PPTX report'."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "date": {
+                        "type": "string",
+                        "description": "Report date in YYYY-MM-DD format. Optional, defaults to today.",
+                    }
+                },
+                "required": [],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "tool_set_preference",
+            "description": (
+                "Save a durable store owner preference that persists across chats and sessions "
+                "(e.g., 'always assume UPI unless I say cash' -> key='default_payment_mode', value='UPI'; "
+                "or 'default atta = Aashirvaad 5kg' -> key='default_atta', value='Aashirvaad Atta 5kg')."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "key": {
+                        "type": "string",
+                        "description": "The preference key (e.g., 'default_payment_mode', 'default_brand', 'store_name').",
+                    },
+                    "value": {
+                        "type": "string",
+                        "description": "The preference value to remember.",
+                    },
+                },
+                "required": ["key", "value"],
+            },
+        },
+    },
 ]
+

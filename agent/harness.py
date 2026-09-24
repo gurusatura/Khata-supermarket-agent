@@ -20,7 +20,7 @@ from openai import OpenAI
 
 from agent.tools   import TOOL_DEFINITIONS
 from agent.executor import execute_tool
-from services.memory import get_preference, set_preference
+from services.memory import get_preference, set_preference, get_all_preferences
 
 # ─────────────────────────────────────────────────────────────
 # Ollama client — OpenAI SDK pointed at local Ollama
@@ -81,6 +81,15 @@ def run_agent(user_message: str, chat_id: str, history: list) -> tuple[str, list
     system = SYSTEM_PROMPT
     if recovered_sale_id:
         system += f"\n\n[CRITICAL SYSTEM DATA]: There is currently an OPEN draft bill. The `sale_id` is: {recovered_sale_id}. You MUST pass this exact `sale_id` string to `tool_add_item`, `tool_remove_item`, or `tool_finalize_sale` when editing this bill."
+
+    # Inject durable owner preferences from memory
+    try:
+        prefs = get_all_preferences()
+        if prefs:
+            prefs_lines = "\n".join([f"- {k}: {v}" for k, v in prefs.items()])
+            system += f"\n\n[STORE OWNER PREFERENCES (DURABLE MEMORY)]:\n{prefs_lines}\nRespect these preferences by default unless overridden by the user."
+    except Exception:
+        pass
 
     # Build the messages list for this turn
     messages = [{"role": "system", "content": system}] + history

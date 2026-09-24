@@ -18,7 +18,8 @@ from services.inventory  import check_stock, receive_stock
 from services.sales      import draft_sale, add_item_to_sale, finalize_sale
 from services.khata      import get_khata_balance, record_payment
 from services.analytics  import get_daily_sales
-from services.documents  import generate_invoice
+from services.documents  import generate_invoice, generate_analytics_deck
+from services.memory     import set_preference
 from services.db         import get_connection
 
 
@@ -163,6 +164,21 @@ def execute_tool(tool_name: str, args: dict, chat_id: str) -> dict:
         elif tool_name == "tool_generate_invoice":
             path = generate_invoice(args["sale_id"])
             return {"status": "generated", "file_path": path}
+
+        elif tool_name == "tool_generate_analytics_deck":
+            raw_date = args.get("date")
+            if raw_date:
+                d = date_type.fromisoformat(raw_date)
+            else:
+                d = date_type.today()
+            path = generate_analytics_deck(d)
+            return {"status": "generated", "file_path": path, "report_date": str(d)}
+
+        elif tool_name == "tool_set_preference":
+            key = str(args["key"]).strip()
+            val = args["value"]
+            set_preference(key, val)
+            return {"status": "saved", "preference": key, "value": val}
 
         else:
             return {"error": f"Unknown tool: {tool_name}"}
