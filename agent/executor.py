@@ -104,9 +104,7 @@ def execute_tool(tool_name: str, args: dict, chat_id: str) -> dict:
             product_id = _find_product_id(args["product_name"])
             receive_stock(
                 product_id=product_id,
-                quantity=args["quantity"],
-                cost_price=args["cost_price"],
-                sell_price=args["sell_price"],
+                quantity=args["quantity"]
             )
             return {"status": "received", "product": args["product_name"], "quantity": args["quantity"]}
 
